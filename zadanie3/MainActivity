@@ -1,70 +1,122 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp">
+package com.example.uczniowie;
 
-    <!-- Nazwa aktualnego ucznia -->
-    <TextView
-        android:id="@+id/uczenTekst"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Uczeń: "
-        android:textSize="24sp"
-        android:layout_marginBottom="12dp"/>
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.TextView;
 
-    <!-- Ocena ucznia -->
-    <TextView
-        android:id="@+id/ocenaTekst"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Ocena: "
-        android:textSize="22sp"
-        android:layout_marginBottom="24dp"/>
+import java.util.ArrayList;
 
-    <!-- Strzałki do zmiany ucznia -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="24dp">
+// Klasa reprezentująca jednego ucznia
+class Uczen {
+    String imie;
+    int ocena;
 
-        <Button
-            android:id="@+id/przyciskPoprzedni"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="← Poprzedni"
-            android:layout_marginEnd="16dp"/>
+    Uczen(String imie, int ocena) {
+        this.imie = imie;
+        this.ocena = ocena;
+    }
+}
 
-        <Button
-            android:id="@+id/przyciskNastepny"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Następny →"/>
-    </LinearLayout>
+public class MainActivity extends Activity {
 
-    <!-- Strzałki do zmiany oceny -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+    // Lista uczniów (każdy uczeń ma swoje imię i ocenę)
+    private ArrayList<Uczen> uczniowie = new ArrayList<>();
 
-        <Button
-            android:id="@+id/przyciskMinus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="–"
-            android:textSize="24sp"
-            android:layout_marginEnd="24dp"/>
+    // Indeks aktualnego ucznia
+    private int indeksUcznia = 0;
 
-        <Button
-            android:id="@+id/przyciskPlus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="+"
-            android:textSize="24sp"/>
-    </LinearLayout>
+    // Klucze do zapisu danych przy obrocie ekranu
+    private static final String KLUCZ_OCENY = "oceny";
+    private static final String KLUCZ_POZYCJA = "pozycja";
 
-</LinearLayout>
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Połączenie z elementami interfejsu
+        TextView uczenTekst = findViewById(R.id.uczenTekst);
+        TextView ocenaTekst = findViewById(R.id.ocenaTekst);
+        Button przyciskPoprzedni = findViewById(R.id.przyciskPoprzedni);
+        Button przyciskNastepny = findViewById(R.id.przyciskNastepny);
+        Button przyciskPlus = findViewById(R.id.przyciskPlus);
+        Button przyciskMinus = findViewById(R.id.przyciskMinus);
+
+        // Jeśli to pierwsze uruchomienie aplikacji
+        if (savedInstanceState == null) {
+            // Dodajemy uczniów razem z przypisaną oceną
+            uczniowie.add(new Uczen("Kasia", 5));
+            uczniowie.add(new Uczen("Marek", 3));
+            uczniowie.add(new Uczen("Ola", 4));
+            uczniowie.add(new Uczen("Tomek", 2));
+
+            indeksUcznia = 0; // Zaczynamy od pierwszego ucznia
+        } else {
+            // Po obrocie ekranu: odczyt danych
+            ArrayList<Integer> zapisaneOceny = savedInstanceState.getIntegerArrayList(KLUCZ_OCENY);
+            indeksUcznia = savedInstanceState.getInt(KLUCZ_POZYCJA, 0);
+
+            // Odtwarzamy listę uczniów z zachowanymi ocenami
+            uczniowie.add(new Uczen("Kasia", zapisaneOceny.get(0)));
+            uczniowie.add(new Uczen("Marek", zapisaneOceny.get(1)));
+            uczniowie.add(new Uczen("Ola", zapisaneOceny.get(2)));
+            uczniowie.add(new Uczen("Tomek", zapisaneOceny.get(3)));
+        }
+
+        // Wyświetlamy dane aktualnego ucznia
+        aktualizujWidok(uczenTekst, ocenaTekst);
+
+        // Przycisk "Poprzedni uczeń"
+        przyciskPoprzedni.setOnClickListener(v -> {
+            indeksUcznia = (indeksUcznia - 1 + uczniowie.size()) % uczniowie.size();
+            aktualizujWidok(uczenTekst, ocenaTekst);
+        });
+
+        // Przycisk "Następny uczeń"
+        przyciskNastepny.setOnClickListener(v -> {
+            indeksUcznia = (indeksUcznia + 1) % uczniowie.size();
+            aktualizujWidok(uczenTekst, ocenaTekst);
+        });
+
+        // Przycisk "+" – zwiększa ocenę (maks. 6)
+        przyciskPlus.setOnClickListener(v -> {
+            Uczen u = uczniowie.get(indeksUcznia);
+            if (u.ocena < 6) {
+                u.ocena++;
+                aktualizujWidok(uczenTekst, ocenaTekst);
+            }
+        });
+
+        // Przycisk "-" – zmniejsza ocenę (min. 1)
+        przyciskMinus.setOnClickListener(v -> {
+            Uczen u = uczniowie.get(indeksUcznia);
+            if (u.ocena > 1) {
+                u.ocena--;
+                aktualizujWidok(uczenTekst, ocenaTekst);
+            }
+        });
+    }
+
+    // Aktualizacja widoku
+    private void aktualizujWidok(TextView uczenTekst, TextView ocenaTekst) {
+        Uczen u = uczniowie.get(indeksUcznia);
+        uczenTekst.setText("Uczeń: " + u.imie);
+        ocenaTekst.setText("Ocena: " + u.ocena);
+    }
+
+    // Zapis danych przy obrocie ekranu
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        // Zapisujemy oceny w osobnej liście
+        ArrayList<Integer> zapisaneOceny = new ArrayList<>();
+        for (Uczen u : uczniowie) {
+            zapisaneOceny.add(u.ocena);
+        }
+
+        outState.putIntegerArrayList(KLUCZ_OCENY, zapisaneOceny);
+        outState.putInt(KLUCZ_POZYCJA, indeksUcznia);
+    }
+}
