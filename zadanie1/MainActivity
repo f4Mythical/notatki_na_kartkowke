@@ -1,0 +1,91 @@
+import android.app.Activity
+import android.os.Bundle
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+
+class MainActivity {
+
+    private var posty = arrayListOf("zdjecie1:0", "zdjecie1:0", "zdjecie1:0") // Lista postów: "nazwaZdjecia:polubienia"
+    private var wybranyPost = 0 // Indeks aktualnego posta
+    private var indeksZdjecia = 0 // Indeks aktualnego zdjęcia
+    private val zdjecia = arrayOf("zdjecie1", "zdjecie2", "zdjecie3") // Nazwy obrazków w drawable
+    private val KLUCZ_POSTY = "posty"
+    private val KLUCZ_POZYCJA = "pozycja"
+    private val KLUCZ_ZDJECIE = "zdjecie"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Inicjalizacja widoków za pomocą findViewById
+        val zdjecie: ImageView = findViewById(R.id.zdjecie)
+        val tekstPolubienia: TextView = findViewById(R.id.tekstPolubienia)
+        val przyciskPoprzednie: Button = findViewById(R.id.przyciskPoprzednie)
+        val przyciskNastepne: Button = findViewById(R.id.przyciskNastepne)
+        val przyciskPolub: Button = findViewById(R.id.przyciskPolub)
+
+        // Odczyt danych po obrocie ekranu bez ?:
+        if (savedInstanceState != null) {
+            val zapisanePosty = savedInstanceState.getStringArrayList(KLUCZ_POSTY)
+            if (zapisanePosty != null) {
+                posty = zapisanePosty
+            } else {
+                posty = arrayListOf("zdjecie1:0", "zdjecie1:0", "zdjecie1:0")
+            }
+            wybranyPost = savedInstanceState.getInt(KLUCZ_POZYCJA, 0)
+            indeksZdjecia = savedInstanceState.getInt(KLUCZ_ZDJECIE, 0)
+        } else {
+            posty = arrayListOf("zdjecie1:0", "zdjecie1:0", "zdjecie1:0")
+            wybranyPost = 0
+            indeksZdjecia = 0
+        }
+
+        // Wyświetlenie początkowego posta
+        aktualizujWidok(zdjecie, tekstPolubienia)
+
+        // Przycisk polub
+        przyciskPolub.setOnClickListener {
+            val dane = posty[wybranyPost].split(":")
+            val polubienia = dane[1].toInt() + 1
+            posty[wybranyPost] = "${dane[0]}:$polubienia"
+            aktualizujWidok(zdjecie, tekstPolubienia)
+        }
+
+        // Poprzednie zdjęcie
+        przyciskPoprzednie.setOnClickListener {
+            indeksZdjecia = (indeksZdjecia - 1 + zdjecia.size) % zdjecia.size
+            val dane = posty[wybranyPost].split(":")
+            posty[wybranyPost] = "${zdjecia[indeksZdjecia]}:${dane[1]}"
+            aktualizujWidok(zdjecie, tekstPolubienia)
+        }
+
+        // Następne zdjęcie
+        przyciskNastepne.setOnClickListener {
+            indeksZdjecia = (indeksZdjecia + 1) % zdjecia.size
+            val dane = posty[wybranyPost].split(":")
+            posty[wybranyPost] = "${zdjecia[indeksZdjecia]}:${dane[1]}"
+            aktualizujWidok(zdjecie, tekstPolubienia)
+        }
+    }
+
+    // Funkcja aktualizująca ImageView i TextView
+    private fun aktualizujWidok(zdjecie: ImageView, tekstPolubienia: TextView) {
+        val dane = posty[wybranyPost].split(":")
+        val nazwaZdjecia = dane[0]
+        val polubienia = dane[1]
+        tekstPolubienia.text = "Polubienia: $polubienia"
+
+        // Mapowanie nazwy obrazka na zasób drawable
+        val idZdjecia = resources.getIdentifier(nazwaZdjecia, "drawable", packageName)
+        zdjecie.setImageResource(idZdjecia)
+    }
+
+    // Zapis danych przed obrotem
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putStringArrayList(KLUCZ_POSTY, posty)
+        outState.putInt(KLUCZ_POZYCJA, wybranyPost)
+        outState.putInt(KLUCZ_ZDJECIE, indeksZdjecia)
+    }
+}
